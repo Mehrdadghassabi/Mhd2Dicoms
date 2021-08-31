@@ -31,8 +31,20 @@ namespace ConsoleApp5
             imageFileReader.SetImageIO("MetaImageIO");
             Image image=imageFileReader.Execute();
 
-            ImageFileWriter imageFileWriter = new ImageFileWriter();
+
+            //Image imo = new Image;
+            
+
+           // Console.WriteLine(imo);
+
+         ImageFileWriter imageFileWriter = new ImageFileWriter();
             imageFileWriter.KeepOriginalImageUIDOn();
+            //imageFileWriter.E
+            //PixelIDValueEnum pe=new PixelIDValueEnum();
+            //pe
+            //RescaleIntensityImageFilter
+          //  \\|//
+          //  //|\\
 
             String modification_time=DateTime.Now.ToString("H%m%s");
             String modification_date=(DateTime.Today.Year.ToString())+
@@ -63,21 +75,27 @@ namespace ConsoleApp5
                 };
             //Console.WriteLine(image.GetDimension());
 
-            VectorUInt32 imagesize = image.GetSize();
-            uint[] arr = imagesize.ToArray();
-            VectorUInt32 vui = new VectorUInt32(new uint[] { 511, 511,69 });
-            Image im = new Image();
+           // VectorUInt32 imagesize = image.GetSize();
+           // uint[] arr = imagesize.ToArray();
+           // VectorUInt32 vui = new VectorUInt32(new uint[] { 511, 511,69 });
+            
             //CREATE 2D SLICE TOMORROW
-            Console.WriteLine(image.GetPixelAsFloat(vui));
+            
+           // Console.WriteLine(image.GetPixelAsFloat(vui));
 
-            foreach (uint i in arr)
-                Console.WriteLine(i);
+           /* foreach (uint i in arr)
+                Console.WriteLine(i);*/
 
             //foreach (double d in ori)
             //Console.WriteLine(d)
 
-            Console.WriteLine(image);
+            Console.WriteLine(getnth2dsliceof3dimage(image,3).GetPixelAsFloat(new VectorUInt32(new uint[] { 511, 511 })));
             Console.ReadLine();
+        }
+
+        static void Write_slice(ArrayList series_tag_values, Image im3d,string out_dir,int depth)
+        {
+
         }
 
         static string conc(double[] direction)
@@ -93,7 +111,29 @@ namespace ConsoleApp5
             return sb.ToString();
         }
 
-     
+        static Image getnth2dsliceof3dimage(Image im3d,uint n) {
+            //uint[] arr = im3d.GetSize().ToArray();
+            Image im2d = new Image(im3d.GetWidth(),im3d.GetHeight(),PixelIDValueEnum.sitkFloat32);
+            //Console.WriteLine(im2d.GetDimension());
+            //\\im2d.
+           // VectorUInt32 vui = new VectorUInt32(new uint[] { 511, 511, 69 });
+
+            for (uint i = 0; i <  im3d.GetWidth(); i++)
+            {
+                for (uint j = 0; j < im3d.GetHeight(); j++)
+                {
+                    VectorUInt32 vui3 = new VectorUInt32(new uint[] { i, j, n });
+                    VectorUInt32 vui2 = new VectorUInt32(new uint[] { i, j });
+
+                    float re = im3d.GetPixelAsFloat(vui3);
+                    im2d.SetPixelAsFloat(vui3, re);
+                    
+                }
+            }
+
+
+                    return im2d;
+        }
     }
 
 }
