@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +26,9 @@ namespace ConsoleApp5
 
         static void Main(string[] args)
         {
+            var watch = new Stopwatch();
+            watch.Start();
+
             ImageFileReader imageFileReader = new ImageFileReader();
             imageFileReader.SetFileName("C:\\Users\\m3xpgag\\source\\repos\\" +
                 "ConsoleApp5\\ConsoleApp5\\sample.mhd");
@@ -32,23 +37,15 @@ namespace ConsoleApp5
             Image image=imageFileReader.Execute();
 
 
-            //Image imo = new Image;
-            
-
-           // Console.WriteLine(imo);
-
-         ImageFileWriter imageFileWriter = new ImageFileWriter();
+            ImageFileWriter imageFileWriter = new ImageFileWriter();
             imageFileWriter.KeepOriginalImageUIDOn();
-            //imageFileWriter.E
-            //PixelIDValueEnum pe=new PixelIDValueEnum();
-            //pe
-            //RescaleIntensityImageFilter
+           
+
           //  \\|//
           //  //|\\
 
-            String modification_time=DateTime.Now.ToString("H%m%s");
-            String modification_date=(DateTime.Today.Year.ToString())+
-                (DateTime.Now.ToString("MM"))+(DateTime.Now.ToString("dd"));
+            String modification_time= Getcurrentime();
+            String modification_date= Getcurrendate();
 
             VectorDouble direction_Vec = image.GetDirection();
             double[] direction = direction_Vec.ToArray();
@@ -73,39 +70,62 @@ namespace ConsoleApp5
                      new tup_string("0028|0102", "15"), 
                 new tup_string("0028|0103", "1") 
                 };
-            //Console.WriteLine(image.GetDimension());
 
-           // VectorUInt32 imagesize = image.GetSize();
-           // uint[] arr = imagesize.ToArray();
-           // VectorUInt32 vui = new VectorUInt32(new uint[] { 511, 511,69 });
-            
-            //CREATE 2D SLICE TOMORROW
-            
-           // Console.WriteLine(image.GetPixelAsFloat(vui));
+            for(uint i = 0; i < image.GetDepth(); i++)
+            {
+                Write_slice(series_tag_values, image, i, imageFileWriter);
+               // Console.WriteLine(i);
+            }
+            watch.Stop();
 
-           /* foreach (uint i in arr)
-                Console.WriteLine(i);*/
-
-            //foreach (double d in ori)
-            //Console.WriteLine(d)
-
-            Console.WriteLine(getnth2dsliceof3dimage(image,3).GetPixelAsFloat(new VectorUInt32(new uint[] { 511, 511 })));
-            Console.ReadLine();
+            Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
+            Console.ReadKey();
         }
 
-        static void Write_slice(ArrayList series_tag_values, Image im3d,string out_dir,int depth)
+        static void Write_slice(ArrayList series_tag_values, Image im3d,uint depth, ImageFileWriter ifw)
         {
+            
+            Image im2d = getnth2dsliceof3dimage(im3d, depth);
+            foreach (tup_string tup in series_tag_values.ToArray()) {
+                im2d.SetMetaData(tup.x, tup.y);
+            }
 
+            im2d.SetMetaData("0008|0012", Getcurrendate());
+
+            im2d.SetMetaData("0008|0012", Getcurrentime());
+
+            im2d.SetMetaData("0008|0060", "CT");
+
+           int i = Convert.ToInt32(depth);
+            Int64 tt = Convert.ToInt64(i);
+
+            VectorDouble drr=
+            im3d.TransformIndexToPhysicalPoint(new VectorInt64(new Int64[] { 0,0, tt }));
+           
+            
+            string st ="\\"+ conc(drr.ToArray());
+
+            im2d.SetMetaData("0020|0032", st);
+
+            im2d.SetMetaData("0020,0013", depth.ToString());
+
+            string basePath = @"C:\Users\m3xpgag\source\repos\ConsoleApp5\ConsoleApp5\di";
+
+            string filePath = ".dcm";
+            string combinedPath = Path.Combine(basePath, (depth.ToString() + filePath));
+           
+            ifw.SetFileName(combinedPath);
+            ifw.Execute(im2d);
         }
 
-        static string conc(double[] direction)
+        static string conc(double[] cot)
         {
             StringBuilder sb = new StringBuilder();
-            for(int i=0; i<direction.Length; i++) {
+            for(int i=0; i<cot.Length; i++) {
                 if (i != 0)
                     sb.Append("\\");
 
-                sb.Append(direction[i].ToString("0.0#"));
+                sb.Append(cot[i].ToString("0.0#"));
             }
 
             return sb.ToString();
@@ -133,6 +153,17 @@ namespace ConsoleApp5
 
 
                     return im2d;
+        }
+
+        static string Getcurrentime()
+        {
+            return DateTime.Now.ToString("H%m%s");
+        }
+
+        static string Getcurrendate()
+        {
+            return (DateTime.Today.Year.ToString()) +
+                (DateTime.Now.ToString("MM")) + (DateTime.Now.ToString("dd"));
         }
     }
 
